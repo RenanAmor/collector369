@@ -1,0 +1,36 @@
+﻿# Vendor
+/vendor/*
+!/vendor/.gitkeep
+
+# Node
+/node_modules/
+
+# Environment
+.env
+
+# Storage
+/storage/downloads/*
+!/storage/downloads/.gitkeep
+/storage/temp/*
+!/storage/temp/.gitkeep
+/storage/logs/*
+!/storage/logs/.gitkeep
+/storage/cache/*
+!/storage/cache/.gitkeep
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Playwright
+/test-results/
+/playwright-report/
+
+# Composer
+composer.lock

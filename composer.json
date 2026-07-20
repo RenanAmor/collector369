@@ -1,0 +1,28 @@
+﻿{
+    "name": "l369/collector369",
+    "description": "Infraestrutura oficial de coleta de dados do Ecossistema L369",
+    "type": "project",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "L369"
+        }
+    ],
+    "require": {
+        "php": "^8.2"
+    },
+    "require-dev": {},
+    "autoload": {
+        "psr-4": {
+            "Collector369\\": "app/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    }
+}

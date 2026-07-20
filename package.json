@@ -1,0 +1,12 @@
+﻿{
+    "name": "collector369",
+    "version": "0.1.0",
+    "description": "Infraestrutura oficial de coleta de dados do Ecossistema L369",
+    "private": true,
+    "scripts": {
+        "test": "playwright test"
+    },
+    "devDependencies": {
+        "@playwright/test": "^1.40.0"
+    }
+}
