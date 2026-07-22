@@ -16,6 +16,7 @@ final class CollectorConfigTest extends TestCase
         'INVESTING_BASE_URL',
         'INVESTING_CARTEIRA_URL',
         'INVESTING_PROFILE_DIR',
+        'INVESTING_INCOMING_PATH',
         'OUTPUT_PATH',
         'BROWSER_HEADLESS',
         'BROWSER_TIMEOUT',
@@ -43,6 +44,7 @@ final class CollectorConfigTest extends TestCase
         file_put_contents($this->root . '/.env', implode("\n", [
             'INVESTING_CARTEIRA_URL=https://br.investing.com/portfolio/example',
             'INVESTING_PROFILE_DIR=./storage/session/investing-profile',
+            'INVESTING_INCOMING_PATH=./storage/incoming/investing',
             'OUTPUT_PATH=./storage/output',
             'BROWSER_HEADLESS=false',
             'BROWSER_TIMEOUT=15000',
@@ -53,6 +55,7 @@ final class CollectorConfigTest extends TestCase
 
         self::assertSame('https://br.investing.com/portfolio/example', $config->investingCarteiraUrl());
         self::assertSame($this->root . '/storage/session/investing-profile', $config->investingProfileDir());
+        self::assertSame($this->root . '/storage/incoming/investing', $config->investingIncomingPath());
         self::assertSame($this->root . '/storage/output', $config->outputPath());
         self::assertFalse($config->browserHeadless());
         self::assertSame(15000, $config->browserTimeout());

@@ -9,6 +9,11 @@
 .env
 
 # Storage
+/storage/incoming/*
+!/storage/incoming/.gitkeep
+!/storage/incoming/investing/
+/storage/incoming/investing/*
+!/storage/incoming/investing/.gitkeep
 /storage/downloads/*
 !/storage/downloads/.gitkeep
 !/storage/downloads/investing/

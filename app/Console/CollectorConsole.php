@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace Collector369\Console;
 
-use Collector369\Collectors\Browser\BrowserManager;
 use Collector369\Collectors\CollectorManager;
-use Collector369\Collectors\Downloads\DownloadManager;
 use Collector369\Collectors\Providers\Investing\InvestingProvider;
 use Collector369\Collectors\Storage\CollectorStorage;
 use Collector369\Collectors\Validation\FileValidator;
@@ -42,12 +40,10 @@ final class CollectorConsole
         $config = new CollectorConfig($this->rootPath);
         $logger = new Logger($config->path()->logs(), $config->logLevel());
 
-        $browserManager = new BrowserManager($this->rootPath, $config->browserTimeout());
-        $downloadManager = new DownloadManager();
         $fileValidator = new FileValidator();
         $storage = new CollectorStorage($config->outputPath());
 
-        $provider = new InvestingProvider($browserManager, $downloadManager);
+        $provider = new InvestingProvider($config->investingIncomingPath());
         $workflow = new WorkflowRunner($provider, $fileValidator, $storage, $logger);
         $manager = new CollectorManager(['investing' => $workflow]);
 

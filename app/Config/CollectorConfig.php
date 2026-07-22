@@ -44,6 +44,11 @@ final class CollectorConfig
         return $this->resolvePath($this->env('INVESTING_PROFILE_DIR', './storage/session/investing-profile'));
     }
 
+    public function investingIncomingPath(): string
+    {
+        return $this->resolvePath($this->env('INVESTING_INCOMING_PATH', './storage/incoming/investing'));
+    }
+
     public function outputPath(): string
     {
         return $this->resolvePath($this->env('OUTPUT_PATH', './storage/output'));
