@@ -1,8 +1,10 @@
-﻿<?php
+<?php
 
 declare(strict_types=1);
 
 namespace Collector369\Collectors\Contracts;
+
+use Collector369\Collectors\DTO\CollectedFile;
 
 /**
  * CollectorProviderInterface
@@ -12,5 +14,5 @@ namespace Collector369\Collectors\Contracts;
  */
 interface CollectorProviderInterface
 {
-    //
+    public function collect(): CollectedFile;
 }

@@ -1,4 +1,4 @@
-﻿# Vendor
+# Vendor
 /vendor/*
 !/vendor/.gitkeep
 
@@ -11,12 +11,19 @@
 # Storage
 /storage/downloads/*
 !/storage/downloads/.gitkeep
+!/storage/downloads/investing/
+/storage/downloads/investing/*
+!/storage/downloads/investing/.gitkeep
 /storage/temp/*
 !/storage/temp/.gitkeep
 /storage/logs/*
 !/storage/logs/.gitkeep
 /storage/cache/*
 !/storage/cache/.gitkeep
+/storage/session/*
+!/storage/session/.gitkeep
+/storage/output/*
+!/storage/output/.gitkeep
 
 # IDE
 .idea/
@@ -34,3 +41,9 @@ Thumbs.db
 
 # Composer
 composer.lock
+
+# PHPUnit
+.phpunit.result.cache
+
+# Claude Code (config local, não faz parte do projeto)
+/.claude/
