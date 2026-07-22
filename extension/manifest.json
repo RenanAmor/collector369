@@ -1,0 +1,15 @@
+{
+    "manifest_version": 3,
+    "name": "Collector369 - Extensão de Coleta",
+    "version": "0.1.0",
+    "description": "Fundação da extensão de coleta do Collector369 (Ecossistema L369). Estrutura base para reproduzir, em sprints futuras, o fluxo hoje realizado pelo Automa.",
+    "background": {
+        "service_worker": "background/service-worker.js",
+        "type": "module"
+    },
+    "permissions": [
+        "scripting",
+        "downloads",
+        "storage"
+    ]
+}
