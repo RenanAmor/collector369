@@ -6,7 +6,9 @@ namespace Collector369\Console;
 
 use Collector369\Collectors\CollectorManager;
 use Collector369\Collectors\Providers\Investing\InvestingProvider;
+use Collector369\Collectors\Providers\SinaFinance\SinaFinanceProvider;
 use Collector369\Collectors\Providers\TwelveData\TwelveDataProvider;
+use Collector369\Collectors\Providers\YahooFinance\YahooFinanceProvider;
 use Collector369\Collectors\ProviderRegistry;
 use Collector369\Collectors\Storage\CollectorStorage;
 use Collector369\Collectors\Validation\FileValidator;
@@ -41,6 +43,28 @@ final class CollectorConsole
         'USD/MXN', 'USD/NOK', 'USD/NZD', 'USD/AUD', 'USD/KRW', 'USD/CNY', 'EUR/BRL',
         'XAU/USD', 'SOYB',
     ];
+
+    /**
+     * Símbolos validados ao vivo na Sprint 16 (ver
+     * docs/arquitetura/Sprint-16-Provider-YahooFinance.md) — cobrem os 13
+     * ativos da Lista Oficial sem cobertura na Twelve Data (Cobre, WTI e
+     * os 11 Índices). Três são índices à vista usados como proxy de um
+     * ativo nomeado "Futuros" na Lista Oficial, por não existir contrato
+     * futuro contínuo disponível gratuitamente para eles (Hang Seng,
+     * China A50, VIX) — documentado no mesmo arquivo.
+     */
+    private const YAHOO_FINANCE_SYMBOLS = [
+        'CL=F', 'HG=F', 'YM=F', '^GDOW', '^BSESN', '^DJSH', '399001.SZ',
+        '000001.SS', 'DX-Y.NYB', 'OSEAX.OL', '^HSI', 'XIN9.FGI', '^VIX',
+    ];
+
+    /**
+     * Decisão do PO (Sprint 16): Minério de Ferro deve ser coletado da Sina
+     * Finance, contrato contínuo `I0` (Dalian Commodity Exchange), sem
+     * substituição por ETF/proxy — ver
+     * docs/arquitetura/Sprint-16-Provider-SinaFinance.md.
+     */
+    private const SINA_FINANCE_SYMBOLS = ['I0'];
 
     private const USAGE = 'Uso: bin/collector369 collect:<provider> | transport:production [--provider=<nome>]';
 
@@ -81,6 +105,14 @@ final class CollectorConsole
             $config->twelveDataApiKey(),
             self::TWELVE_DATA_SYMBOLS,
             $config->twelveDataStagingPath(),
+        ));
+        $registry->register('yahoofinance', new YahooFinanceProvider(
+            self::YAHOO_FINANCE_SYMBOLS,
+            $config->yahooFinanceStagingPath(),
+        ));
+        $registry->register('sinafinance', new SinaFinanceProvider(
+            self::SINA_FINANCE_SYMBOLS,
+            $config->sinaFinanceStagingPath(),
         ));
 
         if (!$registry->has($providerName)) {

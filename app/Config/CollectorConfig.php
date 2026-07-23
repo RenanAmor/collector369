@@ -64,6 +64,16 @@ final class CollectorConfig
         return $this->resolvePath($this->env('TWELVE_DATA_STAGING_PATH', './storage/downloads/twelvedata'));
     }
 
+    public function yahooFinanceStagingPath(): string
+    {
+        return $this->resolvePath($this->env('YAHOO_FINANCE_STAGING_PATH', './storage/downloads/yahoofinance'));
+    }
+
+    public function sinaFinanceStagingPath(): string
+    {
+        return $this->resolvePath($this->env('SINA_FINANCE_STAGING_PATH', './storage/downloads/sinafinance'));
+    }
+
     public function productionFtpHost(): string
     {
         return $this->env('PRODUCTION_FTP_HOST', '');
