@@ -55,3 +55,18 @@ O formato posicional do feed não é documentado oficialmente pela Sina. O mapea
 ## 5. Resultado
 
 Minério de Ferro passa a ser coletado como ativo real (não proxy), via `SinaFinanceProvider`, símbolo `I0`. A Lista Oficial de Ativos Monitorados passa de 31 para **32 ativos** (adição aprovada pelo PO nesta sprint).
+
+## 6. Cobertura final consolidada (32 ativos)
+
+Validação visual da Sprint 16 confirmada por Renan (PO) em produção (23/07/2026): YahooFinance, SinaFinance e TwelveData com leitura OK, Minério de Ferro (`I0`) visível, percentuais formatados corretamente. Nesta mesma validação, o PO esclareceu que o Checklist 369 exige o índice VIX **à vista**, não o futuro — `^VIX` é, portanto, dado real e não proxy (ver correção em `Sprint-16-Provider-YahooFinance.md`, seção 4).
+
+Consolidando essa correção com a adição do Minério de Ferro (real, via Sina):
+
+| Categoria | Total |
+|---|---|
+| ✅ Cobertura real | **29/32** |
+| 🟡 Cobertura via proxy (disclosed) | **3/32** (Soja/SOYB, Hang Seng/`^HSI`, China A50/`XIN9.FGI`) |
+| ❌ Sem cobertura | **0/32** |
+| Disponíveis (real + proxy) | **32/32** |
+
+Todos os 32 ativos da Lista Oficial têm cotação fluindo pelo pipeline; nenhum bloqueio remanescente.

@@ -29,7 +29,7 @@ Conforme item 7 da Política, todo novo Provider deve declarar seu tipo de fonte
 
 Todas as respostas abaixo vieram de chamadas reais a `https://query1.finance.yahoo.com/v8/finance/chart/{símbolo}?interval=1d&range=1d`, com cabeçalho `User-Agent` de navegador, sem nenhum símbolo inventado.
 
-### Correspondência direta (10) — mesmo instrumento nomeado na Lista Oficial
+### Correspondência direta (11) — mesmo instrumento nomeado na Lista Oficial
 
 | Ativo (Lista Oficial) | Símbolo Yahoo | Nome retornado pela API | Preço | Timestamp real |
 |---|---|---|---|---|
@@ -43,30 +43,32 @@ Todas as respostas abaixo vieram de chamadas reais a `https://query1.finance.yah
 | Shanghai Composite | `000001.SS` | SSE Composite Index | 3876.777 | 2026-07-23 |
 | Índice Dólar Futuros | `DX-Y.NYB` | ICE US Dollar Index - Index - C | 101.438 | 2026-07-23 |
 | Oslo All Share | `OSEAX.OL` | Oslo Børs All-share Index_GI | 2390.3 | 2026-07-23 |
+| S&P 500 VIX Futuros | `^VIX` | CBOE Volatility Index | 18.70 | 2026-07-23 |
 
 Nota: o símbolo legado `^OSEAX` também existe no catálogo da Yahoo, mas retorna dado congelado desde novembro de 2020 (`regularMarketTime` parado) — **descartado**; `OSEAX.OL` é o símbolo com dado corrente e foi o adotado.
 
-### Correspondência via proxy — índice à vista, não o contrato futuro (3)
+**Correção do PO (validação visual em produção, 23/07/2026):** o Checklist 369 exige o índice VIX **à vista** (spot), não o contrato futuro. `^VIX` (CBOE Volatility Index) é, portanto, exatamente o dado pedido — não um proxy. A linha do VIX foi movida da tabela de proxy (abaixo) para a de correspondência direta.
 
-A Lista Oficial nomeia estes três ativos como "Futuros", mas a Yahoo Finance não oferece gratuitamente uma série contínua do contrato futuro para eles (testado e confirmado ausente: `VIX=F`, `CN=F`, `HSI=F` — todos `404 Not Found`). Os símbolos abaixo são o índice à vista real do mesmo mercado, **não o futuro** — mesma natureza de disclosure já usada para Soja/`SOYB` na Sprint 9/15.
+### Correspondência via proxy — índice à vista, não o contrato futuro (2)
+
+A Lista Oficial nomeia estes dois ativos como "Futuros", mas a Yahoo Finance não oferece gratuitamente uma série contínua do contrato futuro para eles (testado e confirmado ausente: `CN=F`, `HSI=F` — ambos `404 Not Found`). Os símbolos abaixo são o índice à vista real do mesmo mercado, **não o futuro** — mesma natureza de disclosure já usada para Soja/`SOYB` na Sprint 9/15.
 
 | Ativo (Lista Oficial) | Símbolo Yahoo usado | Nome retornado | Preço | Ressalva |
 |---|---|---|---|---|
 | Hang Seng Futuros | `^HSI` | HANG SENG INDEX | 25210.81 | Índice à vista (HKEX), não o futuro |
 | China A50 Futuros | `XIN9.FGI` | FTSE China A50 Index | 15287.21 | Índice à vista, não o futuro (SGX) |
-| S&P 500 VIX Futuros | `^VIX` | CBOE Volatility Index | 18.70 | Índice à vista (CBOE), não o futuro |
 
 ## 5. Cobertura resultante da Lista Oficial (31 ativos)
 
-| Categoria | Antes (Sprint 15) | Depois (Sprint 16) |
+| Categoria | Antes (Sprint 15) | Depois (Sprint 16, com correção do VIX) |
 |---|---|---|
-| ✅ Cobertura real | 17/31 | **27/31** (+10, via Yahoo Finance) |
-| 🟡 Cobertura via proxy (disclosed) | 1/31 (Soja/SOYB) | **4/31** (+3: Hang Seng, China A50, VIX — via Yahoo) |
+| ✅ Cobertura real | 17/31 | **28/31** (+11, via Yahoo Finance, incluindo VIX à vista) |
+| 🟡 Cobertura via proxy (disclosed) | 1/31 (Soja/SOYB) | **3/31** (+2: Hang Seng, China A50 — via Yahoo) |
 | ❌ Sem cobertura | 13/31 | **0/31** |
 
-**Todos os 31 ativos da Lista Oficial agora têm alguma cotação real fluindo pelo pipeline** — 27 como o instrumento exato nomeado, 4 como proxy explicitamente documentado (Soja via ETF, e os 3 acima via índice à vista). Nenhum dos 4 proxies é apresentado como se fosse o ativo real sem esta ressalva.
+**Todos os 31 ativos da Lista Oficial agora têm alguma cotação real fluindo pelo pipeline** — 28 como o instrumento exato nomeado (incluindo VIX à vista, o dado exigido pelo Checklist 369), 3 como proxy explicitamente documentado (Soja via ETF, Hang Seng e China A50 via índice à vista). Nenhum dos 3 proxies remanescentes é apresentado como se fosse o ativo real sem esta ressalva. Ver `Sprint-16-Provider-SinaFinance.md` para a contagem final consolidada de 32 ativos (após adição do Minério de Ferro).
 
 ## 6. O que esta sprint não decidiu
 
-- Se os 4 proxies (Soja/SOYB, Hang Seng/`^HSI`, China A50/`XIN9.FGI`, VIX/`^VIX`) são aceitáveis como substitutos definitivos dos ativos futuros nomeados na Lista Oficial, ou se o PO prefere uma fonte paga com o contrato futuro real para algum deles — decisão de produto, não de engenharia.
+- Se os 3 proxies remanescentes (Soja/SOYB, Hang Seng/`^HSI`, China A50/`XIN9.FGI`) são aceitáveis como substitutos definitivos dos ativos futuros nomeados na Lista Oficial, ou se o PO prefere uma fonte paga com o contrato futuro real para algum deles — decisão de produto, não de engenharia.
 - Se a classificação "automação de interface" da Yahoo Finance deve ser revista no futuro (ex.: se a Yahoo formalizar/documentar o endpoint, ou se ele for bloqueado) — a Política pede reavaliação periódica (item 2).
