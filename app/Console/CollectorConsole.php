@@ -6,6 +6,7 @@ namespace Collector369\Console;
 
 use Collector369\Collectors\CollectorManager;
 use Collector369\Collectors\Providers\Investing\InvestingProvider;
+use Collector369\Collectors\ProviderRegistry;
 use Collector369\Collectors\Storage\CollectorStorage;
 use Collector369\Collectors\Validation\FileValidator;
 use Collector369\Collectors\Workflow\WorkflowRunner;
@@ -17,6 +18,10 @@ use Collector369\Logging\Logger;
  *
  * Interface de linha de comando do Collector369.
  * Ponto de entrada para execução de coletas via terminal.
+ *
+ * A composição dos Providers passa pelo ProviderRegistry: adicionar um
+ * novo Provider no futuro significa apenas registrá-lo aqui — nenhuma
+ * alteração em CollectorManager ou WorkflowRunner é necessária.
  */
 final class CollectorConsole
 {
@@ -39,13 +44,13 @@ final class CollectorConsole
 
         $config = new CollectorConfig($this->rootPath);
         $logger = new Logger($config->path()->logs(), $config->logLevel());
-
         $fileValidator = new FileValidator();
         $storage = new CollectorStorage($config->outputPath());
 
-        $provider = new InvestingProvider($config->investingIncomingPath());
-        $workflow = new WorkflowRunner($provider, $fileValidator, $storage, $logger);
-        $manager = new CollectorManager(['investing' => $workflow]);
+        $registry = new ProviderRegistry();
+        $registry->register('investing', new InvestingProvider($config->investingIncomingPath()));
+
+        $manager = new CollectorManager($this->buildWorkflows($registry, $fileValidator, $storage, $logger));
 
         $result = $manager->run('investing');
 
@@ -59,5 +64,23 @@ final class CollectorConsole
         fwrite(STDERR, "Falha na coleta: {$result->error}" . PHP_EOL);
 
         return 1;
+    }
+
+    /**
+     * @return array<string, WorkflowRunner>
+     */
+    private function buildWorkflows(
+        ProviderRegistry $registry,
+        FileValidator $validator,
+        CollectorStorage $storage,
+        Logger $logger,
+    ): array {
+        $workflows = [];
+
+        foreach ($registry->names() as $name) {
+            $workflows[$name] = new WorkflowRunner($registry->get($name), $validator, $storage, $logger);
+        }
+
+        return $workflows;
     }
 }
