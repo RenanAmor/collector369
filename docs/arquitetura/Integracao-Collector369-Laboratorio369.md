@@ -4,6 +4,14 @@
 
 ---
 
+## Correção de escopo (23/07/2026)
+
+Este documento foi originalmente escrito assumindo que o Laboratório 369 seria implementado no repositório independente `c:/Projetos/L369/laboratorio369`. Renan corrigiu esse entendimento durante a mesma sprint: **o Laboratório 369, nesta fase do Ecossistema L369, é desenvolvido dentro da base de código do `investimentos369`** (`app/Controllers/LabController.php`, e o Motor Macro modelado em `app/Models/Macro*`, `app/Repositories/Macro*`, `app/Services/Macro*`, com schema já preparado em `storage/schema/*macro*`). O repositório `laboratorio369` (sem remote, nunca publicado) foi revertido ao seu estado fundacional e não deve ser usado.
+
+A análise das alternativas de mecanismo de integração abaixo (arquivo/Platform/API/banco/fila) e a recomendação (Alternativa 1) permanecem válidas — apenas o local de implementação do lado consumidor muda de um repositório próprio para dentro do `investimentos369`. Ver a seção **Recomendação** para o contrato atualizado.
+
+---
+
 ## Contexto
 
 A Sprint 10 tem como objetivo único integrar o Collector369 ao Laboratório 369, de forma que o Laboratório consiga consumir automaticamente os dados já produzidos pelos Providers existentes (`investing`, `twelvedata`).
@@ -125,12 +133,12 @@ Justificativa: a Alternativa 1 é a única que satisfaz o critério de sucesso d
 
 A Alternativa 2 é reconhecida aqui como o desenho institucionalmente correto segundo a ADR-001, mas depende de uma decisão maior — adoção da L369 Platform por projetos reais — que nenhum projeto do ecossistema tomou até hoje (nem o próprio Collector369) e que está fora do escopo desta sprint. Fica registrada como trabalho futuro, sem compromisso de prazo.
 
-O contrato entre as partes, caso a Alternativa 1 seja aprovada, seria:
+O contrato entre as partes, com a Alternativa 1 aprovada e o lado consumidor implementado dentro do `investimentos369` (ver Correção de escopo acima), é:
 
-- **Localização:** `OUTPUT_PATH/{provider}/` do Collector369 (hoje `./storage/output/{provider}/`), informada ao Laboratório 369 via configuração (não hardcoded).
+- **Localização:** `OUTPUT_PATH/{provider}/` do Collector369 (hoje `./storage/output/{provider}/`), informada ao `investimentos369` via configuração (não hardcoded).
 - **Convenção de nome:** `{provider}_{YYYY-MM-DD_His}.{extensão}` — já implementada e estável em `CollectorStorage::store()`, sem necessidade de alteração.
-- **Seleção do arquivo:** o Laboratório 369 lê o arquivo mais recente por provider (mesmo critério já usado pelo `InvestingProvider` para localizar arquivos em `storage/incoming/`).
-- **Formato:** planilha `.xlsx`, sem nenhuma interpretação de colunas/indicadores pelo lado do Laboratório 369 nesta sprint — apenas leitura e disponibilização tabular bruta.
+- **Seleção do arquivo:** o `investimentos369` lê o arquivo mais recente por provider (mesmo critério já usado pelo `InvestingProvider` para localizar arquivos em `storage/incoming/`).
+- **Formato:** planilha `.xlsx`, sem nenhuma interpretação de colunas/indicadores nesta sprint — apenas leitura e disponibilização tabular bruta, sem persistência em banco de dados (decisão de Renan: persistência em `macro_asset_quotes` fica para uma sprint futura, quando o modelo de dados do Motor Macro estiver oficialmente fechado).
 
 ---
 
