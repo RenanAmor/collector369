@@ -2,9 +2,15 @@
 
 ## 1. Objetivo
 
-Auditar ao vivo, com a chave `TWELVE_DATA_API_KEY` vigente (rotacionada antes desta sprint), a cobertura real dos 28 ativos da Lista Oficial de Ativos Monitorados pelo `TwelveDataProvider`, e implementar qualquer correção comprovada que caiba na arquitetura atual e no plano gratuito disponível. Estado inicial: 18/28 cobertos (Ações/ADRs 2/2, ETFs 7/7, Câmbio 7/7, Commodities parcial, Índices 0/11) — ver histórico de decisão em `Arquitetura-Multiprovider.md`.
+Auditar ao vivo, com a chave `TWELVE_DATA_API_KEY` vigente (rotacionada antes desta sprint), a cobertura real dos ativos da Lista Oficial de Ativos Monitorados pelo `TwelveDataProvider`, e implementar qualquer correção comprovada que caiba na arquitetura atual e no plano gratuito disponível.
 
-## 2. Método
+## 2. Nota de reconciliação — a Lista Oficial tem 31 ativos, não 28
+
+Uma versão anterior deste relatório declarou a Lista Oficial como tendo "28 ativos" enquanto as categorias enumeradas somavam 31 — inconsistência herdada de uma aproximação nunca verificada, presente desde os registros das Sprints 8/9 ("~28 ativos"). Reconciliado com Renan (PO) diretamente contra a planilha mestre real (`Cópia de Carteira_do_Investing_para_versão_automatizada.xlsx`, a fonte de onde a Lista Oficial é exportada), cujo próprio Excel confirma no rodapé `Contagem: 31`. **O número correto e definitivo é 31.** Os 31 nomes da planilha mestre batem exatamente com os já registrados: Commodities (4) + Índices (11) + Ações/ADRs (2) + ETFs (7) + Câmbio (7) = 31.
+
+Estado inicial desta sprint: 17 ativos com cobertura real confirmada + 1 ativo coberto apenas via proxy (Soja Chicago Futuros, ver seção 3) = 18 símbolos em produção no `TwelveDataProvider`; 13 ativos sem nenhuma cobertura (Cobre, WTI, 11 Índices) — ver histórico de decisão em `Arquitetura-Multiprovider.md`.
+
+## 3. Método
 
 Todas as respostas abaixo vêm de chamadas reais à API (`https://api.twelvedata.com`), feitas com a chave do `.env` local (nunca exibida/logada), respeitando o rate limit gratuito (8 créditos/minuto — mesmo padrão de lote que o `TwelveDataProvider` já usa em produção). Três endpoints foram usados:
 
@@ -12,20 +18,20 @@ Todas as respostas abaixo vêm de chamadas reais à API (`https://api.twelvedata
 - `/indices` — catálogo de referência (1272 entradas) para descobrir o símbolo correto de cada índice antes de gastar créditos de `/quote` adivinhando.
 - `/forex_pairs` e `/symbol_search` — usados para procurar exaustivamente um símbolo de Cobre válido.
 
-Nenhum símbolo foi inventado: todo símbolo citado abaixo foi confirmado (ou refutado) por uma resposta real da API, reproduzida neste documento.
+Nenhum símbolo foi inventado: todo símbolo citado abaixo foi confirmado (ou refutado) por uma resposta real da API, reproduzida neste documento. Esta reconciliação (seção 2) não repetiu nenhuma chamada de API — usou apenas a contagem já certificada por categoria.
 
-## 3. Cobertura por ativo
+## 4. Cobertura por ativo
 
 ### Commodities (4)
 
 | Ativo | Símbolo testado | Resposta real da API | Status |
 |---|---|---|---|
-| Ouro Futuros | `XAU/USD` | 200 — `Gold Spot / US Dollar`, close 4048.68 | ✅ Coberto (sem mudança) |
-| Soja Chicago Futuros | `SOYB` | 200 — `Teucrium Soybean Fund` (ETF) | ⚠️ Coberto via proxy ETF (limitação pré-existente, não é o futuro real de soja) |
+| Ouro Futuros | `XAU/USD` | 200 — `Gold Spot / US Dollar`, close 4048.68 | ✅ Coberto (cobertura real) |
+| Soja Chicago Futuros | `SOYB` | 200 — `Teucrium Soybean Fund` (ETF) | 🟡 **Proxy** — SOYB é um ETF sobre soja, não o contrato futuro real; não conta como cobertura real do ativo declarado |
 | Cobre Futuros | `XCU/USD`, `COPPER`, `HG`, busca textual `copper`, busca por prefixo `XCU*` | `XCU/USD` → 404 `symbol not found`; `COPPER` → 404 `symbol not found`; `HG` → 200, mas resolve para *Hamilton Insurance Group* (ação não relacionada); busca textual/prefixo → nenhum instrumento de commodity cobre em nenhuma bolsa | ❌ Não suportado — nenhum símbolo de cobre existe no catálogo da Twelve Data, sob nenhum plano |
 | Petróleo WTI Futuros | `WTI/USD` | 403 — `**symbol** WTI/USD is not available with your plan. You may select the appropriate plan at https://twelvedata.com/pricing` | ❌ Bloqueado pelo plano — símbolo existe e é reconhecido, requer upgrade |
 
-### Índices (11) — 0/11 cobertos
+### Índices (11) — 0/11 cobertos (real ou proxy)
 
 | Ativo | Símbolo candidato (catálogo `/indices`) | Resposta real de `/quote` | Status |
 |---|---|---|---|
@@ -43,41 +49,49 @@ Nenhum símbolo foi inventado: todo símbolo citado abaixo foi confirmado (ou re
 
 ### Ações/ADRs (2/2) — confirmados ao vivo com a nova chave
 
-`VALE` (Vale S.A., NYSE), `PBR` (Petrobras S.A. ADR, NYSE) — ambos 200 OK.
+`VALE` / Vale SA ADR (NYSE), `PBR` / Petroleo Brasileiro Petrobras SA ADR (NYSE) — ambos 200 OK.
 
 ### ETFs (7/7) — confirmados ao vivo com a nova chave
 
-`EWZ`, `XLF`, `XLP`, `XLE`, `XME`, `EEM`, `SOXX` — todos 200 OK.
+`EWZ` / iShares MSCI Brazil ETF, `XLF` / The Financial Select Sector SPDR Fund, `XLP` / The Consumer Staples Select Sector SPDR Fund, `XLE` / The Energy Select Sector SPDR Fund, `XME` / SPDR S&P Metals and Mining ETF, `EEM` / iShares MSCI Emerging Markets ETF, `SOXX` / iShares Semiconductor ETF — todos 200 OK.
 
 ### Câmbio (7/7) — confirmados ao vivo com a nova chave
 
 `USD/MXN`, `USD/NOK`, `USD/NZD`, `USD/AUD`, `USD/KRW`, `USD/CNY`, `EUR/BRL` — todos 200 OK.
 
-## 4. Causa objetiva das lacunas
+## 5. Causa objetiva das lacunas
 
 - **Índices (0/11):** bloqueio estrutural do plano gratuito da Twelve Data. Dos 11 ativos, 6 existem no catálogo de referência (`/indices`) mas o endpoint `/quote` recusa todos com `"The index unavailable"` — não é um problema de símbolo errado, é o plano gratuito negando cotação de índices como categoria. Os outros 5 (Dow Jones Futuros, The Global Dow, Dow Jones Shanghai, Índice Dólar, VIX) não existem em nenhum catálogo da Twelve Data, sob nenhum nome testado — não é uma questão de plano, a Twelve Data simplesmente não oferece esses instrumentos.
 - **Cobre:** ausência de instrumento. Diferente do WTI (que existe e é só bloqueado por plano), a Twelve Data não tem *nenhum* símbolo de cobre como commodity, em nenhuma variação testada (código ISO `XCU/USD`, nome `COPPER`, ticker de futuro COMEX `HG`, busca textual). Não é uma lacuna de plano — é uma lacuna de catálogo.
 - **WTI:** bloqueio de plano. Símbolo `WTI/USD` existe e é reconhecido pela API; a negativa (`403`) é explícita sobre o motivo — plano gratuito insuficiente.
+- **Soja Chicago Futuros:** não é uma lacuna testada nesta sprint (já coberta desde a Sprint 9), mas fica registrado que a cobertura é indireta — `SOYB` é um ETF sobre soja, não o contrato futuro em si, então não deve ser contado como cobertura real do ativo declarado na Lista Oficial.
 
-## 5. Correções implementadas nesta sprint
+## 6. Correções implementadas nesta sprint
 
 **Nenhuma.** Todo candidato de símbolo testado para Índices, Cobre e WTI falhou por causa comprovada e externa ao código (símbolo inexistente no catálogo da Twelve Data, ou bloqueio explícito de plano). Não há nenhuma mudança de símbolo, de configuração ou de código que aumente a cobertura dentro da arquitetura atual e do plano gratuito vigente — adicionar qualquer um desses símbolos ao `TwelveDataProvider` produziria apenas erros em produção. Por isso `CollectorConsole::TWELVE_DATA_SYMBOLS` permanece com os mesmos 18 símbolos da Sprint 9, e nenhuma das 9 classes protegidas do núcleo foi tocada (diff zero confirmado).
 
-## 6. Cobertura final
+## 7. Cobertura final (31 ativos)
 
-18/28 (64%) — inalterada em relação à Sprint 9, agora reconfirmada ao vivo com a chave de API rotacionada. A rotação de chave não teve efeito sobre o plano/tier: os mesmos bloqueios já documentados na Sprint 8 persistem de forma idêntica.
+| Categoria | Quantidade | Ativos |
+|---|---|---|
+| ✅ Cobertura real | 17/31 (55%) | Ouro Futuros, Vale SA ADR, Petrobras ADR, EWZ, XLF, XLP, XLE, XME, EEM, SOXX, USD/MXN, USD/NOK, USD/NZD, USD/AUD, USD/KRW, USD/CNY, EUR/BRL |
+| 🟡 Cobertura via proxy | 1/31 (3%) | Soja Chicago Futuros (via `SOYB`, ETF — não é o futuro real) |
+| ❌ Sem cobertura | 13/31 (42%) | Cobre Futuros, Petróleo WTI Futuros, e os 11 Índices |
 
-## 7. Bloqueios reais remanescentes (decisão de produto, não de engenharia)
+18 dos 31 ativos (real + proxy) têm algum dado fluindo pelo `TwelveDataProvider` hoje — número inalterado em relação à Sprint 9, agora reconfirmado ao vivo com a chave de API rotacionada. A rotação de chave não teve efeito sobre o plano/tier: os mesmos bloqueios já documentados na Sprint 8 persistem de forma idêntica.
+
+## 8. Bloqueios reais remanescentes (decisão de produto, não de engenharia)
 
 1. **Upgrade de plano pago da Twelve Data** — resolveria WTI e, com alta probabilidade, os 6 índices hoje bloqueados por `"index unavailable"` (Oslo All Share, BSE Sensex 30, Hang Seng, China A50, SZSE Component, e provavelmente Shanghai Composite).
 2. **Segundo Provider dedicado** — necessário para Cobre e para os 5 índices que não existem em nenhum catálogo da Twelve Data (Dow Jones Futuros, Global Dow, Dow Jones Shanghai, Índice Dólar, VIX), já que nenhum plano da Twelve Data os oferece.
+3. **Soja Chicago Futuros** — se a cobertura via proxy ETF (`SOYB`) não for aceitável como substituto do futuro real, também depende de um Provider que ofereça o contrato futuro propriamente dito.
 
-Nenhuma das duas opções foi decidida nesta sprint — ambas exigem decisão do Product Owner (orçamento/prioridade), não implementação.
+Nenhuma das três opções foi decidida nesta sprint — todas exigem decisão do Product Owner (orçamento/prioridade), não implementação.
 
-## 8. Execução ponta a ponta desta sprint
+## 9. Execução ponta a ponta desta sprint
 
 - Suíte de testes PHPUnit: 43/43 passando.
-- Coleta real via `php bin/collector369 collect:twelvedata`: sucesso, 18 ativos coletados e entregues em `storage/collector369/output/twelvedata/` (dentro da árvore do `investimentos369`, caminho canônico da Sprint 13).
+- Coleta real via `php bin/collector369 collect:twelvedata`: sucesso, 18 ativos (17 reais + 1 proxy) coletados e entregues em `storage/collector369/output/twelvedata/` (dentro da árvore do `investimentos369`, caminho canônico da Sprint 13).
 - Transporte via `php bin/collector369 transport:production`: `investing` já estava atualizado; `twelvedata` transportado e verificado com sucesso (7402 bytes) no FTP de produção.
 - Validação de leitura no Laboratório 369 (`investimentos369`, fora do repositório do Collector369): smoke test direto via `app/autoload.php` (bootstrap real, não o do PHPUnit — lição da Sprint 12) confirmou leitura correta de ambos os providers (`investing`: 3 linhas; `twelvedata`: 19 linhas, cabeçalho e primeira linha de dados conferidos).
 - Diff zero confirmado nas 9 classes protegidas do núcleo (`CollectorProviderInterface`, `ProviderRegistry`, `ProviderResolver`, `WorkflowRunner`, `CollectorManager`, `BrowserManager`, `DownloadManager`, `FileValidator`, `CollectorStorage`) — na verdade, diff zero em todo o repositório, já que nenhuma correção de símbolo foi possível.
