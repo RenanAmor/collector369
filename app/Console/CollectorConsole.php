@@ -13,17 +13,25 @@ use Collector369\Collectors\Validation\FileValidator;
 use Collector369\Collectors\Workflow\WorkflowRunner;
 use Collector369\Config\CollectorConfig;
 use Collector369\Logging\Logger;
+use Collector369\Transport\DTO\TransportRunOutcome;
+use Collector369\Transport\Ftp\NativeFtpClient;
+use Collector369\Transport\ProductionTransport;
 
 /**
  * CollectorConsole
  *
  * Interface de linha de comando do Collector369.
- * Ponto de entrada para execução de coletas via terminal.
+ * Ponto de entrada para execução de coletas e para o transporte do
+ * arquivo de output até a produção, via terminal.
  *
- * O comando é sempre `collect:<provider>`, resolvido diretamente pelo
- * ProviderRegistry — adicionar um novo Provider no futuro significa
+ * O comando de coleta é sempre `collect:<provider>`, resolvido diretamente
+ * pelo ProviderRegistry — adicionar um novo Provider no futuro significa
  * apenas registrá-lo aqui; nenhuma alteração em CollectorManager ou
  * WorkflowRunner é necessária.
+ *
+ * O comando de transporte é `transport:production [--provider=<nome>]`,
+ * deliberadamente separado do `collect:` — coleta e entrega para produção
+ * são passos conscientes e independentes, nunca encadeados automaticamente.
  */
 final class CollectorConsole
 {
@@ -33,6 +41,8 @@ final class CollectorConsole
         'USD/MXN', 'USD/NOK', 'USD/NZD', 'USD/AUD', 'USD/KRW', 'USD/CNY', 'EUR/BRL',
         'XAU/USD', 'SOYB',
     ];
+
+    private const USAGE = 'Uso: bin/collector369 collect:<provider> | transport:production [--provider=<nome>]';
 
     public function __construct(private readonly string $rootPath)
     {
@@ -45,14 +55,21 @@ final class CollectorConsole
     {
         $command = $argv[1] ?? null;
 
-        if ($command === null || !str_starts_with($command, 'collect:')) {
-            fwrite(STDERR, 'Uso: bin/collector369 collect:<provider>' . PHP_EOL);
-
-            return 1;
+        if ($command !== null && str_starts_with($command, 'collect:')) {
+            return $this->runCollect(substr($command, strlen('collect:')));
         }
 
-        $providerName = substr($command, strlen('collect:'));
+        if ($command === 'transport:production') {
+            return $this->runTransport($argv);
+        }
 
+        fwrite(STDERR, self::USAGE . PHP_EOL);
+
+        return 1;
+    }
+
+    private function runCollect(string $providerName): int
+    {
         $config = new CollectorConfig($this->rootPath);
         $logger = new Logger($config->path()->logs(), $config->logLevel());
         $fileValidator = new FileValidator();
@@ -103,5 +120,81 @@ final class CollectorConsole
         }
 
         return $workflows;
+    }
+
+    /**
+     * @param list<string> $argv
+     */
+    private function runTransport(array $argv): int
+    {
+        $config = new CollectorConfig($this->rootPath);
+        $logger = new Logger($config->path()->logs(), $config->logLevel());
+
+        $host = $config->productionFtpHost();
+        $user = $config->productionFtpUser();
+        $password = $config->productionFtpPassword();
+
+        if ($host === '' || $user === '' || $password === '') {
+            fwrite(STDERR, 'Faltam PRODUCTION_FTP_HOST / PRODUCTION_FTP_USER / PRODUCTION_FTP_PASSWORD no .env.' . PHP_EOL);
+
+            return 2;
+        }
+
+        $transport = new ProductionTransport(
+            outputPath: $config->outputPath(),
+            ftp: new NativeFtpClient(),
+            host: $host,
+            port: $config->productionFtpPort(),
+            user: $user,
+            password: $password,
+            remoteRoot: $config->productionFtpRemotePath(),
+            logger: $logger,
+        );
+
+        $outcome = $transport->run($this->extractProviderFlag($argv));
+
+        return $this->reportTransportResults($outcome);
+    }
+
+    /**
+     * @param list<string> $argv
+     */
+    private function extractProviderFlag(array $argv): ?string
+    {
+        foreach ($argv as $arg) {
+            if (str_starts_with($arg, '--provider=')) {
+                return substr($arg, strlen('--provider='));
+            }
+        }
+
+        return null;
+    }
+
+    private function reportTransportResults(TransportRunOutcome $outcome): int
+    {
+        if (!$outcome->connected) {
+            fwrite(STDERR, 'Falha ao conectar/autenticar no FTP de produção — nenhum provider foi processado.' . PHP_EOL);
+
+            return 2;
+        }
+
+        if ($outcome->results === []) {
+            echo 'Nada para transportar (nenhum arquivo em OUTPUT_PATH).' . PHP_EOL;
+
+            return 0;
+        }
+
+        $hasError = false;
+
+        foreach ($outcome->results as $result) {
+            $stream = $result->status === 'error' || $result->status === 'conflict' ? STDERR : STDOUT;
+            fwrite($stream, "[{$result->provider}] {$result->status}: {$result->message}" . PHP_EOL);
+
+            if ($result->status === 'error' || $result->status === 'conflict') {
+                $hasError = true;
+            }
+        }
+
+        return $hasError ? 1 : 0;
     }
 }

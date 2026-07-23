@@ -64,6 +64,31 @@ final class CollectorConfig
         return $this->resolvePath($this->env('TWELVE_DATA_STAGING_PATH', './storage/downloads/twelvedata'));
     }
 
+    public function productionFtpHost(): string
+    {
+        return $this->env('PRODUCTION_FTP_HOST', '');
+    }
+
+    public function productionFtpPort(): int
+    {
+        return (int) $this->env('PRODUCTION_FTP_PORT', '21');
+    }
+
+    public function productionFtpUser(): string
+    {
+        return $this->env('PRODUCTION_FTP_USER', '');
+    }
+
+    public function productionFtpPassword(): string
+    {
+        return $this->env('PRODUCTION_FTP_PASSWORD', '');
+    }
+
+    public function productionFtpRemotePath(): string
+    {
+        return $this->env('PRODUCTION_FTP_REMOTE_PATH', '/');
+    }
+
     public function browserHeadless(): bool
     {
         return filter_var($this->env('BROWSER_HEADLESS', 'true'), FILTER_VALIDATE_BOOLEAN);
