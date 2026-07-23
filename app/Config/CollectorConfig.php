@@ -54,6 +54,16 @@ final class CollectorConfig
         return $this->resolvePath($this->env('OUTPUT_PATH', './storage/output'));
     }
 
+    public function twelveDataApiKey(): string
+    {
+        return $this->env('TWELVE_DATA_API_KEY', '');
+    }
+
+    public function twelveDataStagingPath(): string
+    {
+        return $this->resolvePath($this->env('TWELVE_DATA_STAGING_PATH', './storage/downloads/twelvedata'));
+    }
+
     public function browserHeadless(): bool
     {
         return filter_var($this->env('BROWSER_HEADLESS', 'true'), FILTER_VALIDATE_BOOLEAN);

@@ -18,6 +18,8 @@ final class CollectorConfigTest extends TestCase
         'INVESTING_PROFILE_DIR',
         'INVESTING_INCOMING_PATH',
         'OUTPUT_PATH',
+        'TWELVE_DATA_API_KEY',
+        'TWELVE_DATA_STAGING_PATH',
         'BROWSER_HEADLESS',
         'BROWSER_TIMEOUT',
         'LOG_LEVEL',
@@ -46,6 +48,8 @@ final class CollectorConfigTest extends TestCase
             'INVESTING_PROFILE_DIR=./storage/session/investing-profile',
             'INVESTING_INCOMING_PATH=./storage/incoming/investing',
             'OUTPUT_PATH=./storage/output',
+            'TWELVE_DATA_API_KEY=abc123',
+            'TWELVE_DATA_STAGING_PATH=./storage/downloads/twelvedata',
             'BROWSER_HEADLESS=false',
             'BROWSER_TIMEOUT=15000',
             'LOG_LEVEL=info',
@@ -57,6 +61,8 @@ final class CollectorConfigTest extends TestCase
         self::assertSame($this->root . '/storage/session/investing-profile', $config->investingProfileDir());
         self::assertSame($this->root . '/storage/incoming/investing', $config->investingIncomingPath());
         self::assertSame($this->root . '/storage/output', $config->outputPath());
+        self::assertSame('abc123', $config->twelveDataApiKey());
+        self::assertSame($this->root . '/storage/downloads/twelvedata', $config->twelveDataStagingPath());
         self::assertFalse($config->browserHeadless());
         self::assertSame(15000, $config->browserTimeout());
         self::assertSame('info', $config->logLevel());

@@ -19,6 +19,9 @@
 !/storage/downloads/investing/
 /storage/downloads/investing/*
 !/storage/downloads/investing/.gitkeep
+!/storage/downloads/twelvedata/
+/storage/downloads/twelvedata/*
+!/storage/downloads/twelvedata/.gitkeep
 /storage/temp/*
 !/storage/temp/.gitkeep
 /storage/logs/*
