@@ -64,6 +64,14 @@ final class CollectorConfig
         return $this->resolvePath($this->env('TWELVE_DATA_STAGING_PATH', './storage/downloads/twelvedata'));
     }
 
+    /** Limite de créditos/minuto da API Twelve Data. Default seguro: 8 (plano gratuito). */
+    public function twelveDataCreditsPerMinute(): int
+    {
+        $value = (int) $this->env('TWELVE_DATA_CREDITS_PER_MINUTE', '8');
+
+        return $value > 0 ? $value : 8;
+    }
+
     public function yahooFinanceStagingPath(): string
     {
         return $this->resolvePath($this->env('YAHOO_FINANCE_STAGING_PATH', './storage/downloads/yahoofinance'));

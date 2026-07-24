@@ -20,6 +20,7 @@ final class CollectorConfigTest extends TestCase
         'OUTPUT_PATH',
         'TWELVE_DATA_API_KEY',
         'TWELVE_DATA_STAGING_PATH',
+        'TWELVE_DATA_CREDITS_PER_MINUTE',
         'BROWSER_HEADLESS',
         'BROWSER_TIMEOUT',
         'LOG_LEVEL',
@@ -50,6 +51,7 @@ final class CollectorConfigTest extends TestCase
             'OUTPUT_PATH=./storage/output',
             'TWELVE_DATA_API_KEY=abc123',
             'TWELVE_DATA_STAGING_PATH=./storage/downloads/twelvedata',
+            'TWELVE_DATA_CREDITS_PER_MINUTE=5',
             'BROWSER_HEADLESS=false',
             'BROWSER_TIMEOUT=15000',
             'LOG_LEVEL=info',
@@ -63,6 +65,7 @@ final class CollectorConfigTest extends TestCase
         self::assertSame($this->root . '/storage/output', $config->outputPath());
         self::assertSame('abc123', $config->twelveDataApiKey());
         self::assertSame($this->root . '/storage/downloads/twelvedata', $config->twelveDataStagingPath());
+        self::assertSame(5, $config->twelveDataCreditsPerMinute());
         self::assertFalse($config->browserHeadless());
         self::assertSame(15000, $config->browserTimeout());
         self::assertSame('info', $config->logLevel());
@@ -75,9 +78,19 @@ final class CollectorConfigTest extends TestCase
         $config = new CollectorConfig($this->root);
 
         self::assertSame('', $config->investingBaseUrl());
+        self::assertSame(8, $config->twelveDataCreditsPerMinute());
         self::assertTrue($config->browserHeadless());
         self::assertSame(30000, $config->browserTimeout());
         self::assertSame('debug', $config->logLevel());
+    }
+
+    public function testFallsBackToTheSafeDefaultWhenCreditsPerMinuteIsNotPositive(): void
+    {
+        file_put_contents($this->root . '/.env', 'TWELVE_DATA_CREDITS_PER_MINUTE=0');
+
+        $config = new CollectorConfig($this->root);
+
+        self::assertSame(8, $config->twelveDataCreditsPerMinute());
     }
 
     private function resetEnv(): void

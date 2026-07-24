@@ -29,10 +29,13 @@ final class TwelveDataProvider implements CollectorProviderInterface
     private const PROVIDER_NAME = 'twelvedata';
     private const API_BASE_URL = 'https://api.twelvedata.com/quote';
 
-    /** Limite de créditos por minuto do plano gratuito do Twelve Data. */
-    private const MAX_SYMBOLS_PER_REQUEST = 8;
+    /** Default seguro: limite de créditos por minuto do plano gratuito do Twelve Data. */
+    private const DEFAULT_CREDITS_PER_MINUTE = 8;
 
     private const RATE_LIMIT_COOLDOWN_SECONDS = 61;
+
+    /** Créditos por minuto efetivamente respeitados (também define o tamanho do lote). */
+    private readonly int $creditsPerMinute;
 
     /** @var callable(string): string */
     private $httpGet;
@@ -44,6 +47,8 @@ final class TwelveDataProvider implements CollectorProviderInterface
      * @param list<string> $symbols símbolos a consultar
      * @param (callable(string): string)|null $httpGet substituível em testes
      * @param (callable(): void)|null $sleep substituível em testes
+     * @param int|null $creditsPerMinute limite de créditos/minuto da API (configurável via
+     *  TWELVE_DATA_CREDITS_PER_MINUTE); valores nulos ou não positivos caem no default seguro (8)
      */
     public function __construct(
         private readonly string $apiKey,
@@ -51,7 +56,12 @@ final class TwelveDataProvider implements CollectorProviderInterface
         private readonly string $stagingPath,
         ?callable $httpGet = null,
         ?callable $sleep = null,
+        ?int $creditsPerMinute = null,
     ) {
+        $this->creditsPerMinute = $creditsPerMinute !== null && $creditsPerMinute > 0
+            ? $creditsPerMinute
+            : self::DEFAULT_CREDITS_PER_MINUTE;
+
         $this->httpGet = $httpGet ?? self::defaultHttpGet();
         $this->sleep = $sleep ?? static function (): void {
             sleep(self::RATE_LIMIT_COOLDOWN_SECONDS);
@@ -78,7 +88,7 @@ final class TwelveDataProvider implements CollectorProviderInterface
     {
         $quotes = [];
 
-        foreach (array_chunk($this->symbols, self::MAX_SYMBOLS_PER_REQUEST) as $index => $chunk) {
+        foreach (array_chunk($this->symbols, $this->creditsPerMinute) as $index => $chunk) {
             if ($index > 0) {
                 ($this->sleep)();
             }

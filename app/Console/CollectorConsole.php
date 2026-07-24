@@ -15,6 +15,7 @@ use Collector369\Collectors\Validation\FileValidator;
 use Collector369\Collectors\Workflow\WorkflowRunner;
 use Collector369\Config\CollectorConfig;
 use Collector369\Logging\Logger;
+use Collector369\Support\ProcessLock;
 use Collector369\Transport\DTO\TransportRunOutcome;
 use Collector369\Transport\Ftp\NativeFtpClient;
 use Collector369\Transport\ProductionTransport;
@@ -34,6 +35,12 @@ use Collector369\Transport\ProductionTransport;
  * O comando de transporte é `transport:production [--provider=<nome>]`,
  * deliberadamente separado do `collect:` — coleta e entrega para produção
  * são passos conscientes e independentes, nunca encadeados automaticamente.
+ *
+ * O comando `cycle:run` (Sprint 17) é a exceção consciente a essa separação:
+ * encadeia collect: dos três providers automatizados + transport:production
+ * num único processo, protegido por um `ProcessLock` (flock) para que dois
+ * ciclos nunca rodem sobrepostos — é o que o Agendador de Tarefas do Windows
+ * chama a cada 5 minutos via bin/run-5min-cycle.bat.
  */
 final class CollectorConsole
 {
@@ -66,7 +73,12 @@ final class CollectorConsole
      */
     private const SINA_FINANCE_SYMBOLS = ['I0'];
 
-    private const USAGE = 'Uso: bin/collector369 collect:<provider> | transport:production [--provider=<nome>]';
+    /** Providers automatizados encadeados pelo `cycle:run` (Sprint 17) — investing é manual, fica de fora. */
+    private const CYCLE_PROVIDERS = ['twelvedata', 'yahoofinance', 'sinafinance'];
+
+    private const CYCLE_LOCK_FILENAME = 'cycle-run.lock';
+
+    private const USAGE = 'Uso: bin/collector369 collect:<provider> | transport:production [--provider=<nome>] | cycle:run';
 
     public function __construct(private readonly string $rootPath)
     {
@@ -87,9 +99,53 @@ final class CollectorConsole
             return $this->runTransport($argv);
         }
 
+        if ($command === 'cycle:run') {
+            return $this->runCycle($argv);
+        }
+
         fwrite(STDERR, self::USAGE . PHP_EOL);
 
         return 1;
+    }
+
+    /**
+     * Encadeia collect: dos providers automatizados + transport:production
+     * num único ciclo, protegido por lock (flock) contra sobreposição — se
+     * o ciclo anterior (chamado 5 minutos antes pelo Agendador de Tarefas)
+     * ainda estiver rodando, esta execução é ignorada sem erro, em vez de
+     * disputar o limite de créditos/minuto da Twelve Data com ele.
+     *
+     * @param list<string> $argv
+     */
+    private function runCycle(array $argv): int
+    {
+        $config = new CollectorConfig($this->rootPath);
+        $logger = new Logger($config->path()->logs(), $config->logLevel());
+
+        $lock = new ProcessLock($config->path()->cache(self::CYCLE_LOCK_FILENAME));
+
+        if (!$lock->acquire()) {
+            $logger->info('cycle: ciclo anterior ainda em execução — execução atual ignorada');
+            echo 'Ciclo anterior ainda em execução — execução ignorada.' . PHP_EOL;
+
+            return 0;
+        }
+
+        try {
+            $hasError = false;
+
+            foreach (self::CYCLE_PROVIDERS as $providerName) {
+                if ($this->runCollect($providerName) !== 0) {
+                    $hasError = true;
+                }
+            }
+
+            $transportExitCode = $this->runTransport($argv);
+
+            return $hasError ? 1 : $transportExitCode;
+        } finally {
+            $lock->release();
+        }
     }
 
     private function runCollect(string $providerName): int
@@ -105,6 +161,7 @@ final class CollectorConsole
             $config->twelveDataApiKey(),
             self::TWELVE_DATA_SYMBOLS,
             $config->twelveDataStagingPath(),
+            creditsPerMinute: $config->twelveDataCreditsPerMinute(),
         ));
         $registry->register('yahoofinance', new YahooFinanceProvider(
             self::YAHOO_FINANCE_SYMBOLS,
