@@ -82,6 +82,16 @@ final class CollectorConfig
         return $this->resolvePath($this->env('SINA_FINANCE_STAGING_PATH', './storage/downloads/sinafinance'));
     }
 
+    public function b3DolfutStagingPath(): string
+    {
+        return $this->resolvePath($this->env('B3_DOLFUT_STAGING_PATH', './storage/downloads/b3dolfut'));
+    }
+
+    public function b3DolfutCachePath(): string
+    {
+        return $this->resolvePath($this->env('B3_DOLFUT_CACHE_PATH', './storage/cache/b3dolfut'));
+    }
+
     public function productionFtpHost(): string
     {
         return $this->env('PRODUCTION_FTP_HOST', '');

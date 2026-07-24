@@ -5,6 +5,10 @@ declare(strict_types=1);
 namespace Collector369\Console;
 
 use Collector369\Collectors\CollectorManager;
+use Collector369\Collectors\Providers\B3\B3BulletinClient;
+use Collector369\Collectors\Providers\B3\B3BulletinTableParser;
+use Collector369\Collectors\Providers\B3\B3DolfutProvider;
+use Collector369\Collectors\Providers\B3\DolContractResolver;
 use Collector369\Collectors\Providers\Investing\InvestingProvider;
 use Collector369\Collectors\Providers\SinaFinance\SinaFinanceProvider;
 use Collector369\Collectors\Providers\TwelveData\TwelveDataProvider;
@@ -74,7 +78,7 @@ final class CollectorConsole
     private const SINA_FINANCE_SYMBOLS = ['I0'];
 
     /** Providers automatizados encadeados pelo `cycle:run` (Sprint 17) — investing é manual, fica de fora. */
-    private const CYCLE_PROVIDERS = ['twelvedata', 'yahoofinance', 'sinafinance'];
+    private const CYCLE_PROVIDERS = ['twelvedata', 'yahoofinance', 'sinafinance', 'b3dolfut'];
 
     private const CYCLE_LOCK_FILENAME = 'cycle-run.lock';
 
@@ -170,6 +174,13 @@ final class CollectorConsole
         $registry->register('sinafinance', new SinaFinanceProvider(
             self::SINA_FINANCE_SYMBOLS,
             $config->sinaFinanceStagingPath(),
+        ));
+        $registry->register('b3dolfut', new B3DolfutProvider(
+            new B3BulletinClient(),
+            new B3BulletinTableParser(),
+            new DolContractResolver(),
+            $config->b3DolfutCachePath(),
+            $config->b3DolfutStagingPath(),
         ));
 
         if (!$registry->has($providerName)) {
