@@ -137,7 +137,7 @@ final class TwelveDataProvider implements CollectorProviderInterface
      */
     private function writeSpreadsheet(array $quotes): string
     {
-        $rows = [['Símbolo', 'Nome', 'Preço', 'Moeda', 'Variação', 'Variação (%)', 'Data/Hora']];
+        $rows = [['Símbolo', 'Nome', 'Preço', 'Moeda', 'Variação', 'Variação (%)', 'Data/Hora', 'Volume']];
 
         foreach ($quotes as $symbol => $quote) {
             $rows[] = [
@@ -148,6 +148,7 @@ final class TwelveDataProvider implements CollectorProviderInterface
                 $quote['change'] ?? '',
                 $quote['percent_change'] ?? '',
                 $quote['datetime'] ?? '',
+                $quote['volume'] ?? '',
             ];
         }
 

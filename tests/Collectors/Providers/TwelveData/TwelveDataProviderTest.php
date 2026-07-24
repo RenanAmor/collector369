@@ -52,7 +52,7 @@ final class TwelveDataProviderTest extends TestCase
         $rows = IOFactory::load($file->path)->getActiveSheet()->toArray();
 
         self::assertSame(
-            ['Símbolo', 'Nome', 'Preço', 'Moeda', 'Variação', 'Variação (%)', 'Data/Hora'],
+            ['Símbolo', 'Nome', 'Preço', 'Moeda', 'Variação', 'Variação (%)', 'Data/Hora', 'Volume'],
             $rows[0],
         );
         self::assertSame('AAA', $rows[1][0]);

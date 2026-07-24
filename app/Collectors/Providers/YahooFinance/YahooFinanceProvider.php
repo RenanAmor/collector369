@@ -135,7 +135,7 @@ final class YahooFinanceProvider implements CollectorProviderInterface
      */
     private function writeSpreadsheet(array $quotes): string
     {
-        $rows = [['Símbolo', 'Nome', 'Preço', 'Moeda', 'Variação', 'Variação (%)', 'Data/Hora']];
+        $rows = [['Símbolo', 'Nome', 'Preço', 'Moeda', 'Variação', 'Variação (%)', 'Data/Hora', 'Volume']];
 
         foreach ($quotes as $meta) {
             $price = $meta['regularMarketPrice'] ?? null;
@@ -151,6 +151,7 @@ final class YahooFinanceProvider implements CollectorProviderInterface
                 $change ?? '',
                 $changePercent ?? '',
                 $this->formatDateTime($meta['regularMarketTime'] ?? null),
+                $meta['regularMarketVolume'] ?? '',
             ];
         }
 

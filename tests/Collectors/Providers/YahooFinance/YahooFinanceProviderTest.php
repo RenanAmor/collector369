@@ -55,7 +55,7 @@ final class YahooFinanceProviderTest extends TestCase
         $rows = IOFactory::load($file->path)->getActiveSheet()->toArray();
 
         self::assertSame(
-            ['Símbolo', 'Nome', 'Preço', 'Moeda', 'Variação', 'Variação (%)', 'Data/Hora'],
+            ['Símbolo', 'Nome', 'Preço', 'Moeda', 'Variação', 'Variação (%)', 'Data/Hora', 'Volume'],
             $rows[0],
         );
         self::assertSame('HG=F', $rows[1][0]);

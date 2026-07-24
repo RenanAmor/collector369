@@ -61,7 +61,7 @@ final class SinaFinanceProviderTest extends TestCase
         $rows = IOFactory::load($file->path)->getActiveSheet()->toArray();
 
         self::assertSame(
-            ['Símbolo', 'Nome', 'Preço', 'Moeda', 'Variação', 'Variação (%)', 'Data/Hora', 'Fonte'],
+            ['Símbolo', 'Nome', 'Preço', 'Moeda', 'Variação', 'Variação (%)', 'Data/Hora', 'Fonte', 'Volume'],
             $rows[0],
         );
         self::assertSame('I0', $rows[1][0]);

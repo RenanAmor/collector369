@@ -150,6 +150,7 @@ final class SinaFinanceProvider implements CollectorProviderInterface
             'lastSettlePrice' => $fields[10],
             'time' => $fields[1],
             'date' => $fields[17],
+            'volume' => $fields[14],
         ];
     }
 
@@ -158,7 +159,7 @@ final class SinaFinanceProvider implements CollectorProviderInterface
      */
     private function writeSpreadsheet(array $quotes): string
     {
-        $rows = [['Símbolo', 'Nome', 'Preço', 'Moeda', 'Variação', 'Variação (%)', 'Data/Hora', 'Fonte']];
+        $rows = [['Símbolo', 'Nome', 'Preço', 'Moeda', 'Variação', 'Variação (%)', 'Data/Hora', 'Fonte', 'Volume']];
 
         foreach ($quotes as $quote) {
             $price = is_numeric($quote['currentPrice']) ? (float) $quote['currentPrice'] : null;
@@ -175,6 +176,7 @@ final class SinaFinanceProvider implements CollectorProviderInterface
                 $changePercent ?? '',
                 $this->formatDateTime($quote['date'], $quote['time']),
                 self::SOURCE_LABEL,
+                $quote['volume'] ?? '',
             ];
         }
 
